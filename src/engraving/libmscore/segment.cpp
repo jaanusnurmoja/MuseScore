@@ -2301,7 +2301,7 @@ void Segment::createShape(staff_idx_t staffIdx)
                 continue;
             }
             if (e->addToSkyline()) {
-                s.add(e->shape().translated(e->pos()));
+                s.add(e->shape().translated(e->isClef() ? e->ipos() : e->pos()));
             }
         }
     }
@@ -2633,10 +2633,6 @@ double Segment::minHorizontalDistance(Segment* ns, bool systemHeaderGap) const
     }
     double w = std::max(ww, 0.0);        // non-negative
 
-    if (isClefType() && ns && ns->isChordRestType()) {
-        w = std::max(w, double(score()->styleMM(Sid::clefKeyRightMargin)));
-    }
-
     // Header exceptions that need additional space (more than the padding)
     double absoluteMinHeaderDist = 1.5 * spatium();
     if (systemHeaderGap) {
@@ -2743,6 +2739,9 @@ void Segment::computeCrossBeamType(Segment* nextSeg)
     }
     bool upDown = false;
     bool downUp = false;
+    bool canBeAdjusted = true;
+    // Spacing can be adjusted for cross-beam cases only if there aren't
+    // chords in other voices in this or next segment.
     for (EngravingItem* e : elist()) {
         if (!e || !e->isChordRest() || !e->staff()->visible()) {
             continue;
@@ -2752,7 +2751,8 @@ void Segment::computeCrossBeamType(Segment* nextSeg)
             continue;
         }
         if (!thisCR->beam()) {
-            return;
+            canBeAdjusted = false;
+            continue;
         }
         Beam* beam = thisCR->beam();
         for (EngravingItem* ee : nextSeg->elist()) {
@@ -2764,7 +2764,8 @@ void Segment::computeCrossBeamType(Segment* nextSeg)
                 continue;
             }
             if (!nextCR->beam()) {
-                return;
+                canBeAdjusted = false;
+                continue;
             }
             if (nextCR->beam() != beam) {
                 continue;
@@ -2785,6 +2786,7 @@ void Segment::computeCrossBeamType(Segment* nextSeg)
     }
     _crossBeamType.upDown = upDown;
     _crossBeamType.downUp = downUp;
+    _crossBeamType.canBeAdjusted = canBeAdjusted;
 }
 
 /***********************************************

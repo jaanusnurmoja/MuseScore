@@ -62,10 +62,12 @@ struct CrossBeamType
 {
     bool upDown = false; // This chord is stem-up, next chord is stem-down
     bool downUp = false; // This chord is stem-down, next chord is stem-up
+    bool canBeAdjusted = true;
     void reset()
     {
         upDown = false;
         downUp = false;
+        bool canBeAdjusted = true;
     }
 };
 
@@ -316,6 +318,7 @@ public:
     bool isEndBarLineType() const { return _segmentType == SegmentType::EndBarLine; }
     bool isKeySigAnnounceType() const { return _segmentType == SegmentType::KeySigAnnounce; }
     bool isTimeSigAnnounceType() const { return _segmentType == SegmentType::TimeSigAnnounce; }
+    bool isRightAligned() const { return isClefType() || isBreathType(); }
 
     Fraction shortestChordRest() const;
     void computeCrossBeamType(Segment* nextSeg);
